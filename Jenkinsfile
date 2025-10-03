@@ -9,21 +9,36 @@ pipeline {
 
     stages {
         stage('Install Dependencies') {
-            agent { docker { image 'node:16' args '-u root' } }
+            agent {
+                docker {
+                    image 'node:16'
+                    args '-u root'
+                }
+            }
             steps {
                 sh 'npm install --save'
             }
         }
 
         stage('Unit Tests') {
-            agent { docker { image 'node:16' args '-u root' } }
+            agent {
+                docker {
+                    image 'node:16'
+                    args '-u root'
+                }
+            }
             steps {
                 sh 'npm test || echo "No tests defined, skipping."'
             }
         }
 
         stage('Security Scan (Snyk)') {
-            agent { docker { image 'node:16' args '-u root' } }
+            agent {
+                docker {
+                    image 'node:16'
+                    args '-u root'
+                }
+            }
             steps {
                 sh '''
                   npm install -g snyk --unsafe-perm
