@@ -28,11 +28,27 @@ pipeline {
                 }
             }
             steps {
-                sh 'npm test || echo "No tests defined, skipping."'
+                sh 'npm test || echo "No tests defined"'
             }
         }
 
-        stage('Security Scan (Snyk)') {
+
+        stage('Build Docker Image') {
+            steps {
+                sh 'docker build -t $IMAGE_NAME:latest1 .'
+            }
+        }
+
+        stage('Push to DockerHub') {
+            steps {
+                sh '''
+                  echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin
+                  docker push $IMAGE_NAME:latest1
+                '''
+            }
+        }
+
+         stage('Security Scan') {
             agent {
                 docker {
                     image 'node:16'
@@ -47,30 +63,16 @@ pipeline {
                 '''
             }
         }
-
-        stage('Build Docker Image') {
-            steps {
-                sh 'docker build -t $IMAGE_NAME:latest .'
-            }
-        }
-
-        stage('Push to DockerHub') {
-            steps {
-                sh '''
-                  echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin
-                  docker push $IMAGE_NAME:latest
-                '''
-            }
-        }
     }
+    
 
     post {
         always {
-            echo "Pipeline finished (Node 16 build and push)"
+            echo "Pipeline finished"
             cleanWs()
         }
         failure {
-            echo "Pipeline failed. Check logs in Jenkins console."
+            echo "Pipeline failed!"
         }
     }
 }
