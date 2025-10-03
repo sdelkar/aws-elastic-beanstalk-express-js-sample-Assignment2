@@ -1,31 +1,29 @@
 pipeline {
-    agent {
-        docker {
-            image 'node:16'
-            args '-u root'
-        }
-    }
+    agent any
 
     environment {
-        SNYK_TOKEN = credentials('snyk-token')                       // Snyk API token (secret text)
-        DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')  // DockerHub username+token
-        IMAGE_NAME = "sonamdelkar/project2-app"                             //  DockerHub repo
+        SNYK_TOKEN = credentials('snyk-token')
+        DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')
+        IMAGE_NAME = "sonamdelkar/project2-app"
     }
 
     stages {
         stage('Install Dependencies') {
+            agent { docker { image 'node:16' args '-u root' } }
             steps {
                 sh 'npm install --save'
             }
         }
 
         stage('Unit Tests') {
+            agent { docker { image 'node:16' args '-u root' } }
             steps {
                 sh 'npm test || echo "No tests defined, skipping."'
             }
         }
 
         stage('Security Scan (Snyk)') {
+            agent { docker { image 'node:16' args '-u root' } }
             steps {
                 sh '''
                   npm install -g snyk --unsafe-perm
