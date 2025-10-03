@@ -61,7 +61,7 @@ pipeline {
                 sh '''
                   npm install -g snyk --unsafe-perm
                   snyk auth '${SNYK_TOKEN}'
-                  snyk test --severity-threshold=high"
+                  snyk test --severity-threshold=high
                 ''' 
             }
         }
