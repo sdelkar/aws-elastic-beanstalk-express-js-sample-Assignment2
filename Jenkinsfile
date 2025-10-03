@@ -16,7 +16,8 @@ pipeline {
                 }
             }
             steps {
-                sh 'npm install --save'
+                sh 'npm install --save | tee install.log'
+                archiveArtifacts artifacts: 'install.log', fingerprint: true
             }
         }
 
@@ -28,14 +29,14 @@ pipeline {
                 }
             }
             steps {
-                sh 'npm test || echo "No tests defined"'
+                sh 'npm test || echo "No tests defined"' 
             }
         }
 
-
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t $IMAGE_NAME:latest1 .'
+                sh 'docker build -t $IMAGE_NAME:latest1 . | tee build.log'
+                archiveArtifacts artifacts: 'build.log', fingerprint: true
             }
         }
 
@@ -43,12 +44,13 @@ pipeline {
             steps {
                 sh '''
                   echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin
-                  docker push $IMAGE_NAME:latest1
+                  docker push $IMAGE_NAME:latest1 | tee push.log
                 '''
+                archiveArtifacts artifacts: 'push.log', fingerprint: true
             }
         }
 
-         stage('Security Scan') {
+        stage('Security Scan') {
             agent {
                 docker {
                     image 'node:16'
@@ -60,15 +62,16 @@ pipeline {
                   npm install -g snyk --unsafe-perm
                   snyk auth $SNYK_TOKEN
                   snyk test --severity-threshold=high || echo "Vulnerabilities found (non-blocking)"
-                '''
+                ''' 
             }
         }
     }
-    
 
     post {
         always {
             echo "Pipeline finished"
+            // archive all logs from all stages
+            archiveArtifacts artifacts: '**/*.log', allowEmptyArchive: true, fingerprint: true
             cleanWs()
         }
         failure {
